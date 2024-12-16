@@ -1,10 +1,10 @@
 # Do not alter the format of any of the comments below
 # #####
-# initial=Y
-# workDir=
-# rubbishDir=
-# targetDir=
-# outputCSV=
+# initial=N
+# workDir=D:\Videos\SeeStar Work
+# rubbishDir=D:\Videos\SeeStar Rubbish
+# targetDir=D:\Videos\SeeStar Videos
+# outputCSV=D:\Videos\SeeStar DB\SeeStar.csv
 # uncPath=\\seestar\EMMC Images
 # tempDrive=Z:
 # removeSubJpg=Y
@@ -45,22 +45,28 @@
 	# 1=Normal Light pattern
     "^Light_[A-Za-z0-9()'-.\s]+_[A-Za-z0-9()'-.\s]+_[A-Za-z0-9()'-.\s]+_\d{8}-\d{6}$",
 	
-	# 2=Light pattern with mosaic extra on target name
+	# 2=Normal Light pattern with ZWO mosaic
+    "^Light_mosaic_[A-Za-z0-9()'-.\s]+_[A-Za-z0-9()'-.\s]+_[A-Za-z0-9()'-.\s]+_\d{8}-\d{6}$",	
+	
+	# 3=Light pattern with SSC mosaic extra on target name
 	"^Light_[A-Za-z0-9()'-.\s]+_\d+_[A-Za-z0-9()'-.\s]+_[A-Za-z0-9()'-.\s]+_\d{8}-\d{6}$",
 	
-	# 3=Normal Stacked pattern
+	# 4=Normal Stacked pattern
 	"^Stacked_[A-Za-z0-9()'-.\s]+_[A-Za-z0-9()'-.\s]+_[A-Za-z0-9()'-.\s]+_\d{8}-\d{6}$",
 	
-	# 4=Stacked pattern with number of images stacked
+	# 5=Stacked pattern with number of images stacked
 	"^Stacked_\d+_[A-Za-z0-9()'-.\s]+_[A-Za-z0-9()'-.\s]+_[A-Za-z0-9()'-.\s]+_\d{8}-\d{6}$",	
 	
-	# 5=Stacked pattern with number of images stacked and Mosaic
+	# 6=Stacked pattern with number of images stacked with ZWO mosaic
+	"^Stacked_\d+_mosaic_[A-Za-z0-9()'-.\s]+_[A-Za-z0-9()'-.\s]+_[A-Za-z0-9()'-.\s]+_\d{8}-\d{6}$",
+	
+	# 7=Stacked pattern with number of images stacked and SSC Mosaic
 	"^Stacked_\d+_[A-Za-z0-9()'-.\s]+_\d+_[A-Za-z0-9()'-.\s]+_[A-Za-z0-9()'-.\s]+_\d{8}-\d{6}$",
 
-	# 6=Video Stacked pattern
+	# 8=Video Stacked pattern
 	"^Video_Stacked_[A-Za-z0-9()'-.\s]+_\d{8}-\d{6}$",
 	
-    # 7=Non-DSO format containing only date-time and Target
+    # 9=Non-DSO format containing only date-time and Target
     "^\d{4}-\d{2}-\d{2}-\d{6}-.+$"
 	)
 
@@ -510,27 +516,42 @@ function Full-Scan {
 						$filter = $segments[3]
 						$fileDate = $segments[4].Substring(0, 8)
 					}
-					2 { # Light pattern with mosaic extra on target name
+					2 { # Normal Light pattern with ZWO mosaic
+						$mosaic = $segments[1]
+						$targetName = $segments[2]
+						$exposure = $segments[3]
+						$filter = $segments[4]
+						$fileDate = $segments[5].Substring(0, 8)
+					}
+					3 { # Light pattern with mosaic extra on target name
 						$targetName = $segments[1]
 						$mosaic = $segments[2]
 						$exposure = $segments[3]
 						$filter = $segments[4]
 						$fileDate = $segments[5].Substring(0, 8)
 					}
-					3 { # Normal Stacked pattern
+					4 { # Normal Stacked pattern
 						$targetName = $segments[1]
 						$exposure = $segments[2]
 						$filter = $segments[3]
 						$fileDate = $segments[4].Substring(0, 8)
 					}
-					4 { # Stacked pattern with number of images stacked
+					5 { # Stacked pattern with number of images stacked
 						$frameCount = $segments[1]
 						$targetName = $segments[2]
 						$exposure = $segments[3]
 						$filter = $segments[4]
 						$fileDate = $segments[5].Substring(0, 8)
 					}
-					5 { # Stacked pattern with number of images stacked and Mosaic
+					6 { # Stacked pattern with number of images stacked with ZWO mosaic
+						$frameCount = $segments[1]
+						$mosaic = $segments[2]
+						$targetName = $segments[3]
+						$exposure = $segments[4]
+						$filter = $segments[5]
+						$fileDate = $segments[6].Substring(0, 8)
+					}
+					7 { # Stacked pattern with number of images stacked and Mosaic
 						$frameCount = $segments[1]
 						$targetName = $segments[2]
 						$mosaic = $segments[3]
@@ -538,11 +559,11 @@ function Full-Scan {
 						$filter = $segments[5]
 						$fileDate = $segments[6].Substring(0, 8)
 					}
-					6 { # Video Stacked pattern
+					8 { # Video Stacked pattern
 						$targetName = $segments[2]
 						$fileDate = $segments[3].Substring(0, 8)
 					}
-					7 { # Non-DSO format containing only date-time and Target
+					9 { # Non-DSO format containing only date-time and Target
 						$fileDate = $fileName.Substring(0, 10).Replace('-', '')
 						$targetName = $fileName.Substring(18) 
 					}
@@ -652,7 +673,7 @@ Function Remove-Objects	{
 			Move-File -file $_.FullName -rubbishDir $rubbishDir -subFolderName $subFolder.Name
 		}
 	}
-	if ($subFolder.Name.EndsWith("-sub")) {
+	if ($subFolder.Name.EndsWith("-sub") -or $subFolder.Name.EndsWith("_sub")) {
 		if ($removeSubJpg -eq "Y") {
 			Get-ChildItem -Path $sourceDir -Filter "*.jpg" -File -Force | ForEach-Object {
 				Move-File -file $_.FullName -rubbishDir $rubbishDir -subFolderName $subFolder.Name
